@@ -87,6 +87,25 @@ body {
   box-shadow: 0 0 12px 6px rgba(255, 0, 51, 0.4); 
   animation: glowBomb 0.3s ease; 
 }
+/* Tambahkan di bagian style untuk cell */
+.cell {
+    background: #2c2f38;
+    border-radius: 8px;
+    padding-top: 100%;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #3a3f4d;
+    /* Tambahkan ini: */
+    display: block; /* Pastikan elemen ditampilkan */
+    visibility: visible; /* Pastikan terlihat */
+}
+
+/* Tambahkan style untuk sel yang belum di-click */
+.cell:not(.revealed) {
+    background: #2c2f38;
+}
 
 @keyframes glowSafe { 
   from { transform: scale(0.9); opacity: 0.5; } 
