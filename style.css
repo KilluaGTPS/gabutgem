@@ -146,6 +146,34 @@ body {
   transform: translateY(-2px);
 }
 
+.bomb-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.bomb-btn {
+  width: calc(20% - 5px);
+  padding: 8px 0;
+  background: #2c2f38;
+  border: 1px solid #3a3f4d;
+  border-radius: 6px;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bomb-btn:hover {
+  background: #3a3f4d;
+}
+
+.bomb-btn.active {
+  background: linear-gradient(135deg, #ff0033, #cc0028);
+  border-color: #ff0033;
+}
+
 input, select {
   width: 100%;
   padding: 12px;
@@ -341,6 +369,11 @@ input:focus, select:focus {
   box-shadow: 0 0 30px rgba(0, 255, 106, 0.6);
 }
 
+#dailyRewardPopup .popup-content {
+  border-color: #ffaa00;
+  box-shadow: 0 0 30px rgba(255, 170, 0, 0.6);
+}
+
 .popup-icon {
   font-size: 50px;
   margin-bottom: 15px;
@@ -492,6 +525,112 @@ input:focus, select:focus {
   display: block;
 }
 
+.history-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
+.history-item {
+  background: #2c2f38;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid #3a3f4d;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.history-header.win {
+  color: #00ff6a;
+}
+
+.history-header.lose {
+  color: #ff0033;
+}
+
+.history-details {
+  font-size: 14px;
+}
+
+.history-details div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.history-details span:first-child {
+  color: #aaa;
+}
+
+.redeem-input {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.redeem-input input {
+  flex: 1;
+}
+
+.redeem-input button {
+  background: linear-gradient(135deg, #00ff6a, #00d45a);
+  border: none;
+  color: black;
+  padding: 0 15px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.valid-codes ul {
+  padding-left: 20px;
+  text-align: left;
+}
+
+.withdraw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.withdraw-form input {
+  width: 100%;
+}
+
+.withdraw-form button {
+  background: linear-gradient(135deg, #00ff6a, #00d45a);
+  border: none;
+  color: black;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.reward-info {
+  margin: 15px 0;
+}
+
+.claim-button {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #ffaa00, #ff8800);
+  border: none;
+  border-radius: 8px;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 15px 0;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -501,4 +640,4 @@ input:focus, select:focus {
   #sideMenu {
     width: 400px;
   }
-  }
+}
