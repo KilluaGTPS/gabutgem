@@ -20,16 +20,16 @@
     <button onclick="showTab('rewards')">
       <i class="fas fa-gift"></i> Reward
     </button>
-    <button onclick="showGameHistory()">
+    <button onclick="showTab('historyTab')">
       <i class="fas fa-history"></i> History Bermain
     </button>
-    <button onclick="showRedeem()">
+    <button onclick="showTab('redeemTab')">
       <i class="fas fa-ticket-alt"></i> Redeem
     </button>
-    <button onclick="showWithdraw()">
+    <button onclick="showTab('withdrawTab')">
       <i class="fas fa-money-bill-wave"></i> Withdraw
     </button>
-    <button onclick="claimDailyReward()">
+    <button onclick="showTab('dailyRewardTab')">
       <i class="fas fa-calendar-day"></i> Daily Reward
     </button>
   </div>
@@ -57,6 +57,62 @@
     <p>Reward saat ini: <span id="menuRewardBank">0</span></p>
     <button onclick="showReward()" style="background: linear-gradient(135deg, #00ff6a, #00d45a);">
       <i class="fas fa-coins"></i> Klaim Reward
+    </button>
+    <button onclick="showTab('mainMenu')" class="menu-close-btn">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+  
+  <div id="historyTab" class="tab-content">
+    <h3><i class="fas fa-history"></i> History Bermain</h3>
+    <div id="historyList" class="history-list"></div>
+    <button onclick="showTab('mainMenu')" class="menu-close-btn">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+  
+  <div id="redeemTab" class="tab-content">
+    <h3><i class="fas fa-ticket-alt"></i> Redeem Code</h3>
+    <p>Masukkan kode redeem untuk mendapatkan bonus saldo:</p>
+    <div class="redeem-input">
+      <input type="text" id="redeemCodeInput" placeholder="Masukkan kode">
+      <button onclick="processRedeem()"><i class="fas fa-gift"></i> Redeem</button>
+    </div>
+    <div class="valid-codes">
+      <h4>Kode Valid:</h4>
+      <ul>
+        <li>frostsaldo</li>
+        <li>frost100k</li>
+        <li>frostgg</li>
+        <li>frostps</li>
+      </ul>
+    </div>
+    <button onclick="showTab('mainMenu')" class="menu-close-btn">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+  
+  <div id="withdrawTab" class="tab-content">
+    <h3><i class="fas fa-money-bill-wave"></i> Withdraw</h3>
+    <div class="withdraw-form">
+      <input type="text" id="withdrawUsername" placeholder="Username">
+      <input type="text" id="withdrawWorld" placeholder="World">
+      <input type="text" id="withdrawAmountInput" placeholder="Jumlah">
+      <button onclick="processWithdraw()"><i class="fas fa-paper-plane"></i> Kirim Permintaan</button>
+    </div>
+    <button onclick="showTab('mainMenu')" class="menu-close-btn">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+  
+  <div id="dailyRewardTab" class="tab-content">
+    <h3><i class="fas fa-calendar-day"></i> Daily Reward</h3>
+    <div class="reward-info">
+      <p>Dapatkan reward harian dengan mengklaim setiap 24 jam</p>
+      <p>Reward: IDR 1,000 - 10,000</p>
+    </div>
+    <button onclick="claimDailyReward()" class="claim-button">
+      <i class="fas fa-gift"></i> Klaim Reward Harian
     </button>
     <button onclick="showTab('mainMenu')" class="menu-close-btn">
       <i class="fas fa-arrow-left"></i> Kembali
@@ -95,18 +151,19 @@
     </div>
     <div class="input-group">
       <label><i class="fas fa-bomb"></i> Jumlah Bom</label>
-      <select id="mineCount">
-        <option value="1">1 Bom</option>
-        <option value="2">2 Bom</option>
-        <option value="3">3 Bom</option>
-        <option value="4">4 Bom</option>
-        <option value="5">5 Bom</option>
-        <option value="6">6 Bom</option>
-        <option value="7">7 Bom</option>
-        <option value="8">8 Bom</option>
-        <option value="9">9 Bom</option>
-        <option value="10">10 Bom</option>
-      </select>
+      <div class="bomb-selector">
+        <button class="bomb-btn" onclick="setBombCount(1)">1</button>
+        <button class="bomb-btn" onclick="setBombCount(2)">2</button>
+        <button class="bomb-btn" onclick="setBombCount(3)">3</button>
+        <button class="bomb-btn" onclick="setBombCount(4)">4</button>
+        <button class="bomb-btn" onclick="setBombCount(5)">5</button>
+        <button class="bomb-btn" onclick="setBombCount(6)">6</button>
+        <button class="bomb-btn" onclick="setBombCount(7)">7</button>
+        <button class="bomb-btn" onclick="setBombCount(8)">8</button>
+        <button class="bomb-btn" onclick="setBombCount(9)">9</button>
+        <button class="bomb-btn" onclick="setBombCount(10)">10</button>
+      </div>
+      <input type="hidden" id="mineCount" value="1">
     </div>
     <button class="bet-button" id="betButton" onclick="startGame()">BET</button>
   </div>
@@ -152,6 +209,15 @@
   </div>
 </div>
 
+<div id="dailyRewardPopup" class="popup">
+  <div class="popup-content">
+    <div class="popup-icon">🎁</div>
+    <h2>Daily Reward!</h2>
+    <p>Anda mendapatkan: IDR <span id="dailyRewardAmount">0</span></p>
+    <button onclick="closePopup('dailyRewardPopup')">Tutup</button>
+  </div>
+</div>
+
 <div id="bottomBar">
   <button class="cashout-button" id="cashoutButton" onclick="cashOut()" style="display:none;">
     <i class="fas fa-money-bill-wave"></i> Cash Out
@@ -163,4 +229,4 @@
 
 <script src="script.js"></script>
 </body>
-          </html>
+</html>
