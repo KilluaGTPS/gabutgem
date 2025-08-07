@@ -32,6 +32,9 @@
     <button onclick="showTab('dailyRewardTab')">
       <i class="fas fa-calendar-day"></i> Daily Reward
     </button>
+    <button onclick="showTab('adminTab')" id="adminTabBtn" style="display:none;">
+      <i class="fas fa-lock"></i> Admin
+    </button>
   </div>
   
   <div id="howToPlay" class="tab-content">
@@ -80,12 +83,7 @@
     </div>
     <div class="valid-codes">
       <h4>Kode Valid:</h4>
-      <ul>
-        <li>frostsaldo</li>
-        <li>frost100k</li>
-        <li>frostgg</li>
-        <li>frostps</li>
-      </ul>
+      <div id="activeCodesList"></div>
     </div>
     <button onclick="showTab('mainMenu')" class="menu-close-btn">
       <i class="fas fa-arrow-left"></i> Kembali
@@ -114,6 +112,18 @@
     <button onclick="claimDailyReward()" class="claim-button">
       <i class="fas fa-gift"></i> Klaim Reward Harian
     </button>
+    <button onclick="showTab('mainMenu')" class="menu-close-btn">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+  
+  <div id="adminTab" class="tab-content">
+    <h3><i class="fas fa-lock"></i> Admin Panel</h3>
+    <div class="admin-form">
+      <input type="text" id="adminCommand" placeholder="/addredeem CODE AMOUNT MINUTES">
+      <button onclick="processAdminCommand()"><i class="fas fa-key"></i> Execute</button>
+    </div>
+    <div id="adminLogs" class="admin-logs"></div>
     <button onclick="showTab('mainMenu')" class="menu-close-btn">
       <i class="fas fa-arrow-left"></i> Kembali
     </button>
@@ -218,6 +228,8 @@
   </div>
 </div>
 
+<div id="notificationContainer"></div>
+
 <div id="bottomBar">
   <button class="cashout-button" id="cashoutButton" onclick="cashOut()" style="display:none;">
     <i class="fas fa-money-bill-wave"></i> Cash Out
@@ -229,4 +241,4 @@
 
 <script src="script.js"></script>
 </body>
-</html>
+                                                                            </html>
