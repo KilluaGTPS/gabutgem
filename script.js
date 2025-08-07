@@ -1,13 +1,10 @@
 // Game Variables
-let balance = parseInt(localStorage.getItem('frost_balance'));
-if (isNaN(balance)) {
-  balance = 100000;
-  alert("🎉 Selamat datang! Kamu mendapatkan saldo awal IDR 100,000");
-}
-let rewardBank = 0;
+let balance = parseInt(localStorage.getItem('frost_balance')) || 100000;
+let rewardBank = parseInt(localStorage.getItem('frost_reward_bank')) || 0;
 let gameActive = false;
 let bombIndexes = [], revealedIndexes = [], multiplier = 1, currentBet = 0;
-let rewardStartTime = Date.now();
+let rewardStartTime = parseInt(localStorage.getItem('reward_start_time')) || Date.now();
+const usedCodes = JSON.parse(localStorage.getItem('used_redeem_codes') || "[]");
 
 // DOM Elements
 const balanceEl = document.getElementById('balance');
@@ -19,7 +16,7 @@ const gridEl = document.getElementById('mineGrid');
 const rewardBankEl = document.getElementById('rewardBank');
 const menuRewardBankEl = document.getElementById('menuRewardBank');
 const rewardProgressBar = document.getElementById('rewardProgressBar');
-const usedCodes = JSON.parse(localStorage.getItem('used_redeem_codes') || []);
+const historyListEl = document.getElementById('historyList');
 
 // Webhook URL
 const WEBHOOK_URL = "https://discord.com/api/webhooks/1388579228953346068/w6kccMK_aqpGxLKjqt7xgHJj6dApStuavmOgE5ExM-GXJKkLt2bvPWkvveeyJC1YtlMM";
@@ -47,24 +44,26 @@ function updateMultiplierUI() {
 }
 
 function updateRewardBankUI() {
-  rewardBankEl.textContent = formatNumber(rewardBank);
-  menuRewardBankEl.textContent = formatNumber(rewardBank);
+  const formatted = formatNumber(rewardBank);
+  rewardBankEl.textContent = formatted;
+  menuRewardBankEl.textContent = formatted;
+  localStorage.setItem('frost_reward_bank', rewardBank);
 }
 
 function resetGrid() {
-    gridEl.innerHTML = '';
-    for (let i = 0; i < 25; i++) {
-        const div = document.createElement('div');
-        div.className = 'cell show-multiplier'; // Langsung tambahkan show-multiplier
-        
-        const multiplierEl = document.createElement('div');
-        multiplierEl.className = 'cell-multiplier';
-        multiplierEl.textContent = 'x1.00';
-        div.appendChild(multiplierEl);
-        
-        div.addEventListener('click', () => revealCell(i, div));
-        gridEl.appendChild(div);
-    }
+  gridEl.innerHTML = '';
+  for (let i = 0; i < 25; i++) {
+    const div = document.createElement('div');
+    div.className = 'cell show-multiplier';
+    
+    const multiplierEl = document.createElement('div');
+    multiplierEl.className = 'cell-multiplier';
+    multiplierEl.textContent = 'x1.00';
+    div.appendChild(multiplierEl);
+    
+    div.addEventListener('click', () => revealCell(i, div));
+    gridEl.appendChild(div);
+  }
 }
 
 // Game Functions
@@ -125,11 +124,9 @@ function revealCell(index, cellEl) {
     cashoutBtn.style.display = 'none';
     betButton.disabled = false;
     
-    // Show bomb explosion
     document.getElementById('lostAmount').textContent = formatNumber(currentBet);
     showPopup('bombPopup');
     
-    // Reveal all bombs
     bombIndexes.forEach(i => {
       const c = gridEl.children[i];
       if (!c.classList.contains('revealed')) {
@@ -156,7 +153,6 @@ function revealCell(index, cellEl) {
     updateMultiplierUI();
     cashoutBtn.style.display = 'block';
     
-    // Update multiplier display
     const cells = document.querySelectorAll('.cell:not(.revealed)');
     cells.forEach(cell => {
       const multEl = cell.querySelector('.cell-multiplier');
@@ -214,6 +210,14 @@ function doubleBet() {
   betAmountInput.value = formatNumber(bet);
 }
 
+function setBombCount(count) {
+  document.getElementById('mineCount').value = count;
+  document.querySelectorAll('.bomb-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`.bomb-btn:nth-child(${count})`).classList.add('active');
+}
+
 function getBaseMultiplier(bombs) {
   const table = { 
     1: 1.5, 2: 1.4, 3: 1.3, 4: 1.25, 5: 1.2, 
@@ -233,6 +237,10 @@ function showTab(tabId) {
     tab.classList.remove('active');
   });
   document.getElementById(tabId).classList.add('active');
+  
+  if (tabId === 'historyTab') {
+    loadGameHistory();
+  }
 }
 
 function showReward() {
@@ -241,6 +249,7 @@ function showReward() {
     alert(`🎁 Kamu mengklaim reward IDR ${formatNumber(rewardBank)}`);
     rewardBank = 0;
     rewardStartTime = Date.now();
+    localStorage.setItem('reward_start_time', rewardStartTime.toString());
     updateRewardBankUI();
     updateBalanceUI();
   } else {
@@ -255,35 +264,107 @@ function saveGameHistory(entry) {
   localStorage.setItem('frost_game_history', JSON.stringify(history));
 }
 
-function showGameHistory() {
+function loadGameHistory() {
   const history = JSON.parse(localStorage.getItem('frost_game_history')) || [];
-  if (history.length === 0) return alert("Belum ada riwayat permainan.");
+  historyListEl.innerHTML = '';
   
-  let text = "📜 History Permainan:\n\n";
+  if (history.length === 0) {
+    historyListEl.innerHTML = '<p class="empty-history">Belum ada riwayat permainan.</p>';
+    return;
+  }
+  
   history.forEach((h, i) => {
-    text += `${i + 1}. ${h.result} – Taruhan: IDR ${formatNumber(h.bet)} | Bom: ${h.bombs} | ${h.desc} | ${h.time}\n`;
+    const historyItem = document.createElement('div');
+    historyItem.className = 'history-item';
+    
+    const resultClass = h.result.includes("Menang") ? 'win' : 'lose';
+    
+    historyItem.innerHTML = `
+      <div class="history-header ${resultClass}">
+        <span>${h.result}</span>
+        <span>${h.time}</span>
+      </div>
+      <div class="history-details">
+        <div><span>Taruhan:</span> IDR ${formatNumber(h.bet)}</div>
+        <div><span>Bom:</span> ${h.bombs}</div>
+        <div><span>Detail:</span> ${h.desc}</div>
+      </div>
+    `;
+    
+    historyListEl.appendChild(historyItem);
   });
-  
-  alert(text);
 }
 
-function showRedeem() {
-  const code = prompt("🎟️ Masukkan kode redeem:");
-  if (!code) return;
+function processRedeem() {
+  const codeInput = document.getElementById('redeemCodeInput');
+  if (!codeInput) return;
   
-  const input = code.trim().toLowerCase();
+  const code = codeInput.value.trim().toLowerCase();
   const validCodes = ["frostsaldo", "frost100k", "frostgg", "frostps"];
   
-  if (!validCodes.includes(input)) return alert("❌ Kode tidak valid.");
-  if (usedCodes.includes(input)) return alert("⚠️ Kode ini sudah pernah digunakan.");
+  if (!code) {
+    alert("❌ Harap masukkan kode redeem.");
+    return;
+  }
+  
+  if (!validCodes.includes(code)) {
+    alert("❌ Kode tidak valid.");
+    return;
+  }
+  
+  if (usedCodes.includes(code)) {
+    alert("⚠️ Kode ini sudah pernah digunakan.");
+    return;
+  }
   
   const reward = Math.floor(Math.random() * (250000 - 1000 + 1)) + 1000;
   balance += reward;
-  usedCodes.push(input);
+  usedCodes.push(code);
   localStorage.setItem('used_redeem_codes', JSON.stringify(usedCodes));
   updateBalanceUI();
   
   alert(`🎉 Selamat! Kamu mendapatkan IDR ${formatNumber(reward)} dari kode redeem.`);
+  showTab('mainMenu');
+}
+
+function processWithdraw() {
+  const username = document.getElementById('withdrawUsername').value.trim();
+  const world = document.getElementById('withdrawWorld').value.trim();
+  const amountStr = document.getElementById('withdrawAmountInput').value;
+  
+  if (!username) {
+    alert("❌ Username harus diisi.");
+    return;
+  }
+  
+  if (!world) {
+    alert("❌ World name harus diisi.");
+    return;
+  }
+  
+  const amount = parseInt(sanitizeInput(amountStr));
+  if (isNaN(amount) || amount <= 0) {
+    alert("❌ Jumlah tidak valid.");
+    return;
+  }
+  
+  if (amount > balance) {
+    alert("⚠️ Saldo tidak cukup.");
+    return;
+  }
+
+  balance -= amount;
+  updateBalanceUI();
+  
+  document.getElementById('withdrawAmount').textContent = `IDR ${formatNumber(amount)}`;
+  showPopup('withdrawPopup');
+  
+  sendWithdrawToWebhook(username, world, amount);
+  
+  // Reset form
+  document.getElementById('withdrawUsername').value = '';
+  document.getElementById('withdrawWorld').value = '';
+  document.getElementById('withdrawAmountInput').value = '';
 }
 
 function sendWithdrawToWebhook(username, world, amount) {
@@ -322,45 +403,17 @@ function sendWithdrawToWebhook(username, world, amount) {
   });
 }
 
-function showWithdraw() {
-  const username = prompt("👤 Masukkan username kamu:");
-  if (!username || username.trim() === "") {
-    alert("❌ Username harus diisi.");
-    return;
-  }
-
-  const world = prompt("🌍 Masukkan nama world kamu:");
-  if (!world || world.trim() === "") {
-    alert("❌ World name harus diisi.");
-    return;
-  }
-
-  const amountStr = prompt(`🏦 Halo ${username.trim()}, masukkan jumlah withdraw:`);
-  if (!amountStr) return;
-
-  const amount = parseInt(sanitizeInput(amountStr));
-  if (isNaN(amount) || amount <= 0) return alert("❌ Jumlah tidak valid.");
-  if (amount > balance) return alert("⚠️ Saldo tidak cukup.");
-
-  balance -= amount;
-  updateBalanceUI();
-  
-  document.getElementById('withdrawAmount').textContent = `IDR ${formatNumber(amount)}`;
-  showPopup('withdrawPopup');
-  
-  sendWithdrawToWebhook(username.trim(), world.trim(), amount);
-}
-
 function claimDailyReward() {
   const now = Date.now();
-  const lastClaim = parseInt(localStorage.getItem('daily_reward_last') || 0);
+  const lastClaim = parseInt(localStorage.getItem('daily_reward_last') || 0;
   const diff = now - lastClaim;
   
   if (diff < 24 * 60 * 60 * 1000) {
     const remaining = 24 * 60 * 60 * 1000 - diff;
     const hours = Math.floor(remaining / (60 * 60 * 1000));
     const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-    return alert(`⏳ Kamu sudah klaim hari ini!\nCoba lagi dalam ${hours} jam ${minutes} menit.`);
+    alert(`⏳ Kamu sudah klaim hari ini!\nCoba lagi dalam ${hours} jam ${minutes} menit.`);
+    return;
   }
   
   const reward = Math.floor(Math.random() * (10000 - 1000 + 1)) + 1000;
@@ -368,7 +421,8 @@ function claimDailyReward() {
   updateBalanceUI();
   localStorage.setItem('daily_reward_last', now.toString());
   
-  alert(`🎉 Selamat! Kamu mendapatkan IDR ${formatNumber(reward)} dari Daily Reward.`);
+  document.getElementById('dailyRewardAmount').textContent = formatNumber(reward);
+  showPopup('dailyRewardPopup');
 }
 
 // Popup Functions
@@ -383,6 +437,28 @@ function closePopup(id) {
 }
 
 // Initialize Game
+function initGame() {
+  updateBalanceUI();
+  updateMultiplierUI();
+  updateRewardBankUI();
+  resetGrid();
+  
+  // Set default bet amount
+  betAmountInput.value = formatNumber(1000);
+  
+  // Set default bomb count
+  setBombCount(1);
+  
+  // Show initial grid with multipliers
+  const cells = document.querySelectorAll('.cell');
+  cells.forEach(cell => {
+    cell.classList.add('show-multiplier');
+    const multEl = cell.querySelector('.cell-multiplier');
+    if (multEl) multEl.textContent = 'x1.00';
+  });
+}
+
+// Reward Bank System
 setInterval(() => {
   const now = Date.now();
   const elapsed = now - rewardStartTime;
@@ -395,6 +471,7 @@ setInterval(() => {
     let reward = 25 * (1 + 0.5 * extra30s);
     rewardBank = Math.floor(reward);
     updateRewardBankUI();
+    localStorage.setItem('frost_reward_bank', rewardBank.toString());
   }
 }, 1000);
 
@@ -407,24 +484,6 @@ betAmountInput.addEventListener('input', function() {
   this.value = formatted;
   this.setSelectionRange(cursorPos, cursorPos);
 });
-// Tambahkan di bagian paling bawah script.js
-document.addEventListener('DOMContentLoaded', function() {
-    updateBalanceUI();
-    updateMultiplierUI();
-    updateRewardBankUI();
-    resetGrid();
-    
-    // Inisialisasi tambahan
-    const cells = document.querySelectorAll('.cell');
-    cells.forEach(cell => {
-        cell.classList.add('show-multiplier');
-        const multEl = cell.querySelector('.cell-multiplier');
-        if (multEl) multEl.textContent = 'x1.00';
-    });
-});
 
-// Initial UI Update
-updateBalanceUI();
-updateMultiplierUI();
-updateRewardBankUI();
-resetGrid();
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initGame);
