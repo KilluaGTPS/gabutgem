@@ -52,19 +52,19 @@ function updateRewardBankUI() {
 }
 
 function resetGrid() {
-  gridEl.innerHTML = '';
-  for (let i = 0; i < 25; i++) {
-    const div = document.createElement('div');
-    div.className = 'cell';
-    
-    const multiplierEl = document.createElement('div');
-    multiplierEl.className = 'cell-multiplier';
-    multiplierEl.textContent = `x${multiplier.toFixed(2)}`;
-    div.appendChild(multiplierEl);
-    
-    div.addEventListener('click', () => revealCell(i, div));
-    gridEl.appendChild(div);
-  }
+    gridEl.innerHTML = '';
+    for (let i = 0; i < 25; i++) {
+        const div = document.createElement('div');
+        div.className = 'cell show-multiplier'; // Langsung tambahkan show-multiplier
+        
+        const multiplierEl = document.createElement('div');
+        multiplierEl.className = 'cell-multiplier';
+        multiplierEl.textContent = 'x1.00';
+        div.appendChild(multiplierEl);
+        
+        div.addEventListener('click', () => revealCell(i, div));
+        gridEl.appendChild(div);
+    }
 }
 
 // Game Functions
