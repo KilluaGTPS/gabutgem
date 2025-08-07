@@ -666,3 +666,34 @@ function initGame() {
 // Reward Bank System
 setInterval(() => {
   const now = Date.now();
+  const elapsed = now - rewardStartTime;
+  const seconds = Math.floor(elapsed / 1000);
+  const percentage = Math.min((seconds / 60) * 100, 100);
+  rewardProgressBar.style.width = percentage + "%";
+  
+  if (seconds >= 60) {
+    const extra30s = Math.floor((seconds - 60) / 30);
+    let reward = 25 * (1 + 0.5 * extra30s);
+    rewardBank = Math.floor(reward);
+    updateRewardBankUI();
+    localStorage.setItem('frost_reward_bank', rewardBank.toString());
+  }
+  
+  // Check expired codes every minute
+  if (seconds % 60 === 0) {
+    checkExpiredCodes();
+  }
+}, 1000);
+
+// Event Listeners
+betAmountInput.addEventListener('input', function() {
+  const cursorPos = this.selectionStart;
+  const sanitized = sanitizeInput(this.value);
+  const formatted = formatNumber(parseInt(sanitized) || 0);
+  
+  this.value = formatted;
+  this.setSelectionRange(cursorPos, cursorPos);
+});
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', initGame);
