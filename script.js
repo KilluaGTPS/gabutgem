@@ -5,6 +5,8 @@ let gameActive = false;
 let bombIndexes = [], revealedIndexes = [], multiplier = 1, currentBet = 0;
 let rewardStartTime = parseInt(localStorage.getItem('reward_start_time')) || Date.now();
 const usedCodes = JSON.parse(localStorage.getItem('used_redeem_codes') || "[]");
+let redeemCodes = JSON.parse(localStorage.getItem('active_redeem_codes') || "[]");
+let isAdmin = localStorage.getItem('frost_admin') === 'true';
 
 // DOM Elements
 const balanceEl = document.getElementById('balance');
@@ -17,6 +19,9 @@ const rewardBankEl = document.getElementById('rewardBank');
 const menuRewardBankEl = document.getElementById('menuRewardBank');
 const rewardProgressBar = document.getElementById('rewardProgressBar');
 const historyListEl = document.getElementById('historyList');
+const activeCodesListEl = document.getElementById('activeCodesList');
+const adminTabBtn = document.getElementById('adminTabBtn');
+const notificationContainer = document.getElementById('notificationContainer');
 
 // Webhook URL
 const WEBHOOK_URL = "https://discord.com/api/webhooks/1388579228953346068/w6kccMK_aqpGxLKjqt7xgHJj6dApStuavmOgE5ExM-GXJKkLt2bvPWkvveeyJC1YtlMM";
@@ -66,6 +71,19 @@ function resetGrid() {
   }
 }
 
+function showNotification(message, type = 'info', duration = 3000) {
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-times-circle' : 'fa-info-circle'}"></i> ${message}`;
+  
+  notificationContainer.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 500);
+  }, duration);
+}
+
 // Game Functions
 function startGame() {
   if (gameActive) return;
@@ -73,7 +91,7 @@ function startGame() {
   const mineCount = parseInt(document.getElementById('mineCount').value);
   
   if (bet <= 0) {
-    showPopup('insufficientPopup');
+    showNotification("❌ Masukkan jumlah taruhan yang valid", "error");
     return;
   }
   
@@ -103,6 +121,26 @@ function startGame() {
 }
 
 function generateBombs(count) {
+  // Use predefined bomb positions from the photo (1-9)
+  const bombPositions = [
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], // All positions
+    [1, 3, 5, 7, 9], // Odd positions
+    [0, 2, 4, 6, 8], // Even positions
+    [0, 4, 8], // Corners and center
+    [1, 3, 5, 7], // Middle edges
+    [0, 2, 6, 8], // Just corners
+    [1, 4, 7], // Middle column
+    [3, 4, 5], // Middle row
+    [0, 1, 2], // Top row
+    [6, 7, 8]  // Bottom row
+  ];
+  
+  // Use predefined pattern if available, otherwise random
+  if (count <= 9 && bombPositions[count]) {
+    return bombPositions[count].slice(0, count);
+  }
+  
+  // Fallback to random generation
   const arr = [];
   while (arr.length < count) {
     const rand = Math.floor(Math.random() * 25);
@@ -175,7 +213,16 @@ function cashOut() {
   document.getElementById('cashoutAmountBox').textContent = `IDR ${formatNumber(winAmount)}`;
   const box = document.getElementById('cashoutBox');
   box.style.display = 'block';
-  setTimeout(() => box.style.display = 'none', 3000);
+  
+  // Add cashout animation
+  box.style.animation = 'cashoutAnimation 1s ease-out';
+  setTimeout(() => {
+    box.style.animation = '';
+    box.style.display = 'none';
+  }, 3000);
+  
+  // Add confetti effect
+  createConfetti();
   
   saveGameHistory({
     result: "💎 Menang",
@@ -184,6 +231,26 @@ function cashOut() {
     desc: `x${multiplier.toFixed(2)} | Menang IDR ${formatNumber(winAmount)}`,
     time: new Date().toLocaleString()
   });
+}
+
+function createConfetti() {
+  const confettiContainer = document.createElement('div');
+  confettiContainer.className = 'confetti-container';
+  document.body.appendChild(confettiContainer);
+  
+  for (let i = 0; i < 100; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = `${Math.random() * 100}vw`;
+    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+    confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+    confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+    confettiContainer.appendChild(confetti);
+  }
+  
+  setTimeout(() => {
+    confettiContainer.remove();
+  }, 3000);
 }
 
 // Bet Adjustment Functions
@@ -240,20 +307,22 @@ function showTab(tabId) {
   
   if (tabId === 'historyTab') {
     loadGameHistory();
+  } else if (tabId === 'redeemTab') {
+    updateActiveCodesList();
   }
 }
 
 function showReward() {
   if (rewardBank > 0) {
     balance += rewardBank;
-    alert(`🎁 Kamu mengklaim reward IDR ${formatNumber(rewardBank)}`);
+    showNotification(`🎁 Kamu mengklaim reward IDR ${formatNumber(rewardBank)}`, "success");
     rewardBank = 0;
     rewardStartTime = Date.now();
     localStorage.setItem('reward_start_time', rewardStartTime.toString());
     updateRewardBankUI();
     updateBalanceUI();
   } else {
-    alert("⏳ Belum ada reward yang bisa diklaim.");
+    showNotification("⏳ Belum ada reward yang bisa diklaim", "info");
   }
 }
 
@@ -295,25 +364,55 @@ function loadGameHistory() {
   });
 }
 
+function updateActiveCodesList() {
+  activeCodesListEl.innerHTML = '';
+  
+  if (redeemCodes.length === 0) {
+    activeCodesListEl.innerHTML = '<p>Tidak ada kode aktif saat ini.</p>';
+    return;
+  }
+  
+  const ul = document.createElement('ul');
+  redeemCodes.forEach(code => {
+    const li = document.createElement('li');
+    const expiresIn = Math.max(0, Math.floor((code.expiresAt - Date.now()) / 60000));
+    li.innerHTML = `<strong>${code.code}</strong> - IDR ${formatNumber(code.amount)} (Kadaluarsa dalam ${expiresIn} menit)`;
+    ul.appendChild(li);
+  });
+  activeCodesListEl.appendChild(ul);
+}
+
 function processRedeem() {
   const codeInput = document.getElementById('redeemCodeInput');
   if (!codeInput) return;
   
   const code = codeInput.value.trim().toLowerCase();
-  const validCodes = ["frostsaldo", "frost100k", "frostgg", "frostps"];
   
   if (!code) {
-    alert("❌ Harap masukkan kode redeem.");
+    showNotification("❌ Harap masukkan kode redeem", "error");
     return;
   }
   
+  // Check active redeem codes
+  const activeCode = redeemCodes.find(c => c.code.toLowerCase() === code.toLowerCase());
+  if (activeCode) {
+    balance += activeCode.amount;
+    updateBalanceUI();
+    showNotification(`🎉 Selamat! Kamu mendapatkan IDR ${formatNumber(activeCode.amount)} dari kode redeem`, "success");
+    codeInput.value = '';
+    showTab('mainMenu');
+    return;
+  }
+  
+  // Check static codes if no active code found
+  const validCodes = ["frostsaldo", "frost100k", "frostgg", "frostps"];
   if (!validCodes.includes(code)) {
-    alert("❌ Kode tidak valid.");
+    showNotification("❌ Kode tidak valid", "error");
     return;
   }
   
   if (usedCodes.includes(code)) {
-    alert("⚠️ Kode ini sudah pernah digunakan.");
+    showNotification("⚠️ Kode ini sudah pernah digunakan", "error");
     return;
   }
   
@@ -323,7 +422,8 @@ function processRedeem() {
   localStorage.setItem('used_redeem_codes', JSON.stringify(usedCodes));
   updateBalanceUI();
   
-  alert(`🎉 Selamat! Kamu mendapatkan IDR ${formatNumber(reward)} dari kode redeem.`);
+  showNotification(`🎉 Selamat! Kamu mendapatkan IDR ${formatNumber(reward)} dari kode redeem`, "success");
+  codeInput.value = '';
   showTab('mainMenu');
 }
 
@@ -333,23 +433,23 @@ function processWithdraw() {
   const amountStr = document.getElementById('withdrawAmountInput').value;
   
   if (!username) {
-    alert("❌ Username harus diisi.");
+    showNotification("❌ Username harus diisi", "error");
     return;
   }
   
   if (!world) {
-    alert("❌ World name harus diisi.");
+    showNotification("❌ World name harus diisi", "error");
     return;
   }
   
   const amount = parseInt(sanitizeInput(amountStr));
   if (isNaN(amount) || amount <= 0) {
-    alert("❌ Jumlah tidak valid.");
+    showNotification("❌ Jumlah tidak valid", "error");
     return;
   }
   
   if (amount > balance) {
-    alert("⚠️ Saldo tidak cukup.");
+    showNotification("⚠️ Saldo tidak cukup", "error");
     return;
   }
 
@@ -405,14 +505,14 @@ function sendWithdrawToWebhook(username, world, amount) {
 
 function claimDailyReward() {
   const now = Date.now();
-  const lastClaim = parseInt(localStorage.getItem('daily_reward_last') || 0;
+  const lastClaim = parseInt(localStorage.getItem('daily_reward_last')) || 0;
   const diff = now - lastClaim;
   
   if (diff < 24 * 60 * 60 * 1000) {
     const remaining = 24 * 60 * 60 * 1000 - diff;
     const hours = Math.floor(remaining / (60 * 60 * 1000));
     const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-    alert(`⏳ Kamu sudah klaim hari ini!\nCoba lagi dalam ${hours} jam ${minutes} menit.`);
+    showNotification(`⏳ Kamu sudah klaim hari ini! Coba lagi dalam ${hours} jam ${minutes} menit`, "info");
     return;
   }
   
@@ -423,6 +523,103 @@ function claimDailyReward() {
   
   document.getElementById('dailyRewardAmount').textContent = formatNumber(reward);
   showPopup('dailyRewardPopup');
+}
+
+// Admin Functions
+function processAdminCommand() {
+  const commandInput = document.getElementById('adminCommand');
+  const command = commandInput.value.trim();
+  
+  if (!command.startsWith('/')) {
+    showNotification("❌ Command harus dimulai dengan /", "error");
+    return;
+  }
+  
+  const parts = command.split(' ');
+  const cmd = parts[0].toLowerCase();
+  
+  if (cmd === '/addredeem') {
+    if (parts.length < 4) {
+      showNotification("❌ Format: /addredeem CODE AMOUNT MINUTES", "error");
+      return;
+    }
+    
+    const code = parts[1];
+    const amount = parseInt(parts[2]);
+    const minutes = parseInt(parts[3]);
+    
+    if (isNaN(amount) || amount <= 0) {
+      showNotification("❌ Jumlah harus angka positif", "error");
+      return;
+    }
+    
+    if (isNaN(minutes) || minutes <= 0) {
+      showNotification("❌ Menit harus angka positif", "error");
+      return;
+    }
+    
+    const expiresAt = Date.now() + minutes * 60000;
+    const newCode = { code, amount, expiresAt };
+    
+    redeemCodes.push(newCode);
+    localStorage.setItem('active_redeem_codes', JSON.stringify(redeemCodes));
+    
+    // Send to webhook
+    sendRedeemCodeToWebhook(code, amount, minutes);
+    
+    showNotification(`✅ Kode redeem "${code}" untuk IDR ${formatNumber(amount)} selama ${minutes} menit berhasil dibuat`, "success");
+    commandInput.value = '';
+    updateActiveCodesList();
+  } else {
+    showNotification("❌ Command tidak dikenali", "error");
+  }
+}
+
+function sendRedeemCodeToWebhook(code, amount, minutes) {
+  if (!WEBHOOK_URL || WEBHOOK_URL.includes("123456789012345678")) {
+    console.warn("⚠️ Webhook belum diatur dengan benar!");
+    return;
+  }
+
+  const payload = {
+    embeds: [
+      {
+        title: "🎟️ Redeem Code Baru",
+        color: 0xffaa00,
+        fields: [
+          { name: "🆔 Kode", value: code, inline: true },
+          { name: "💰 Jumlah", value: `IDR ${formatNumber(amount)}`, inline: true },
+          { name: "⏳ Berlaku", value: `${minutes} menit`, inline: true }
+        ],
+        timestamp: new Date().toISOString()
+      }
+    ]
+  };
+
+  fetch(WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(response => {
+    if (!response.ok) {
+      console.error("❌ Gagal mengirim webhook:", response.statusText);
+    }
+  })
+  .catch(error => {
+    console.error("❌ Terjadi kesalahan saat mengirim webhook:", error);
+  });
+}
+
+function checkExpiredCodes() {
+  const now = Date.now();
+  const activeCodes = redeemCodes.filter(code => code.expiresAt > now);
+  
+  if (activeCodes.length !== redeemCodes.length) {
+    redeemCodes = activeCodes;
+    localStorage.setItem('active_redeem_codes', JSON.stringify(redeemCodes));
+    updateActiveCodesList();
+  }
 }
 
 // Popup Functions
@@ -456,34 +653,16 @@ function initGame() {
     const multEl = cell.querySelector('.cell-multiplier');
     if (multEl) multEl.textContent = 'x1.00';
   });
+  
+  // Check admin status
+  if (isAdmin) {
+    adminTabBtn.style.display = 'block';
+  }
+  
+  // Check for expired codes
+  checkExpiredCodes();
 }
 
 // Reward Bank System
 setInterval(() => {
   const now = Date.now();
-  const elapsed = now - rewardStartTime;
-  const seconds = Math.floor(elapsed / 1000);
-  const percentage = Math.min((seconds / 60) * 100, 100);
-  rewardProgressBar.style.width = percentage + "%";
-  
-  if (seconds >= 60) {
-    const extra30s = Math.floor((seconds - 60) / 30);
-    let reward = 25 * (1 + 0.5 * extra30s);
-    rewardBank = Math.floor(reward);
-    updateRewardBankUI();
-    localStorage.setItem('frost_reward_bank', rewardBank.toString());
-  }
-}, 1000);
-
-// Event Listeners
-betAmountInput.addEventListener('input', function() {
-  const cursorPos = this.selectionStart;
-  const sanitized = sanitizeInput(this.value);
-  const formatted = formatNumber(parseInt(sanitized) || 0);
-  
-  this.value = formatted;
-  this.setSelectionRange(cursorPos, cursorPos);
-});
-
-// Initialize on load
-document.addEventListener('DOMContentLoaded', initGame);
