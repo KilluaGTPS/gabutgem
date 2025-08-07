@@ -630,6 +630,161 @@ input:focus, select:focus {
   cursor: pointer;
   margin: 15px 0;
 }
+/* Previous CSS remains the same, add these new styles at the end */
+
+.notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 99999;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification i {
+  font-size: 18px;
+}
+
+.notification.success {
+  background: linear-gradient(135deg, #00ff6a, #00d45a);
+}
+
+.notification.error {
+  background: linear-gradient(135deg, #ff0033, #cc0028);
+}
+
+.notification.info {
+  background: linear-gradient(135deg, #3355cc, #2244aa);
+}
+
+.notification.fade-out {
+  animation: fadeOut 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from { top: -50px; opacity: 0; }
+  to { top: 20px; opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: #f00;
+  opacity: 0.8;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+#cashoutBox {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.8);
+  padding: 20px;
+  border-radius: 10px;
+  color: #ffaa00;
+  font-size: 24px;
+  text-align: center;
+  z-index: 9998;
+  display: none;
+  border: 2px solid #ffaa00;
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.7);
+}
+
+@keyframes cashoutAnimation {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.admin-form {
+  display: flex;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.admin-form input {
+  flex: 1;
+}
+
+.admin-form button {
+  background: linear-gradient(135deg, #00ff6a, #00d45a);
+  border: none;
+  color: black;
+  padding: 0 15px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.admin-logs {
+  background: #2c2f38;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cell-multiplier {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 0 3px black;
+  opacity: 1;
+}
+
+.cell.show-multiplier .cell-multiplier {
+  opacity: 1;
+      }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
