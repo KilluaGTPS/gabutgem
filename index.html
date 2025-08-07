@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Frost Game</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+<div id="sideMenu">
+  <div class="menu-header">
+    <h2>FROST GAME MENU</h2>
+  </div>
+  
+  <div id="mainMenu" class="tab-content active">
+    <button onclick="showTab('howToPlay')">
+      <i class="fas fa-gamepad"></i> Cara Bermain
+    </button>
+    <button onclick="showTab('rewards')">
+      <i class="fas fa-gift"></i> Reward
+    </button>
+    <button onclick="showGameHistory()">
+      <i class="fas fa-history"></i> History Bermain
+    </button>
+    <button onclick="showRedeem()">
+      <i class="fas fa-ticket-alt"></i> Redeem
+    </button>
+    <button onclick="showWithdraw()">
+      <i class="fas fa-money-bill-wave"></i> Withdraw
+    </button>
+    <button onclick="claimDailyReward()">
+      <i class="fas fa-calendar-day"></i> Daily Reward
+    </button>
+  </div>
+  
+  <div id="howToPlay" class="tab-content">
+    <h3><i class="fas fa-gamepad"></i> Cara Bermain</h3>
+    <p>1. Masukkan jumlah taruhan</p>
+    <p>2. Pilih jumlah bom yang diinginkan</p>
+    <p>3. Klik tombol BET untuk memulai permainan</p>
+    <p>4. Klik kotak untuk mengungkap isinya:</p>
+    <p>- 💎 Berlian: Lanjutkan bermain dan multiplier naik</p>
+    <p>- 💣 Bom: Game over dan taruhan hilang</p>
+    <p>5. Klik CASH OUT kapan saja untuk mengamankan kemenangan</p>
+    <button onclick="showTab('mainMenu')" class="menu-close-btn">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+  
+  <div id="rewards" class="tab-content">
+    <h3><i class="fas fa-gift"></i> Reward System</h3>
+    <p>Reward Bank akan terisi otomatis setiap menit:</p>
+    <p>- 0-60 detik: Reward belum tersedia</p>
+    <p>- 60+ detik: Reward mulai terkumpul</p>
+    <p>- Setiap 30 detik tambahan: Reward meningkat 50%</p>
+    <p>Reward saat ini: <span id="menuRewardBank">0</span></p>
+    <button onclick="showReward()" style="background: linear-gradient(135deg, #00ff6a, #00d45a);">
+      <i class="fas fa-coins"></i> Klaim Reward
+    </button>
+    <button onclick="showTab('mainMenu')" class="menu-close-btn">
+      <i class="fas fa-arrow-left"></i> Kembali
+    </button>
+  </div>
+  
+  <button onclick="toggleMenu()" class="menu-close-btn">
+    <i class="fas fa-times"></i> Tutup Menu
+  </button>
+</div>
+
+<div class="container">
+  <div class="balance-bar">
+    <div><i class="fas fa-wallet"></i> Saldo: IDR <span id="balance">0</span></div>
+    <div><i class="fas fa-bolt"></i> <span id="multiplier-info">x1.00</span></div>
+  </div>
+  <div class="grid" id="mineGrid"></div>
+  <div class="input-section">
+    <div class="input-group">
+      <label><i class="fas fa-coins"></i> Jumlah Taruhan</label>
+      <div class="quick-bet-buttons">
+        <button onclick="adjustBet(100)">+100</button>
+        <button onclick="adjustBet(1000)">+1K</button>
+        <button onclick="adjustBet(10000)">+10K</button>
+        <button onclick="adjustBet(1000000)">+1M</button>
+      </div>
+      <input type="text" id="betAmount" placeholder="1,000" inputmode="numeric" pattern="[0-9]*" />
+      <div class="bet-mult-buttons">
+        <button onclick="halveBet()">1/2</button>
+        <button onclick="doubleBet()">2x</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <label><i class="fas fa-bomb"></i> Jumlah Bom</label>
+      <select id="mineCount">
+        <option value="1">1 Bom</option>
+        <option value="2">2 Bom</option>
+        <option value="3">3 Bom</option>
+        <option value="4">4 Bom</option>
+        <option value="5">5 Bom</option>
+        <option value="6">6 Bom</option>
+        <option value="7">7 Bom</option>
+        <option value="8">8 Bom</option>
+        <option value="9">9 Bom</option>
+        <option value="10">10 Bom</option>
+      </select>
+    </div>
+    <button class="bet-button" id="betButton" onclick="startGame()">BET</button>
+  </div>
+  <div id="rewardContainer">
+    <div><i class="fas fa-piggy-bank"></i> Reward Bank: IDR <span id="rewardBank">0</span></div>
+    <div id="rewardProgress"><div id="rewardProgressBar"></div></div>
+  </div>
+</div>
+
+<div id="cashoutBox">
+  <div><b><span id="cashoutMultBox">1.00×</span></b></div>
+  <div style="margin-top: 10px; color: white;">
+    <span id="cashoutAmountBox">0</span> <i class="fas fa-coins"></i>
+  </div>
+</div>
+
+<div id="bombPopup" class="popup">
+  <div class="popup-content">
+    <div class="popup-icon">💣</div>
+    <h2>BOOM!</h2>
+    <p>Anda terkena bom!</p>
+    <p>Taruhan hilang: IDR <span id="lostAmount">0</span></p>
+    <button onclick="closePopup('bombPopup')">Tutup</button>
+  </div>
+</div>
+
+<div id="insufficientPopup" class="popup">
+  <div class="popup-content">
+    <div class="popup-icon">⚠️</div>
+    <h2>Saldo Tidak Cukup!</h2>
+    <p>Saldo Anda tidak mencukupi untuk taruhan ini.</p>
+    <button onclick="closePopup('insufficientPopup')">Tutup</button>
+  </div>
+</div>
+
+<div id="withdrawPopup" class="popup">
+  <div class="popup-content">
+    <button class="popup-close" onclick="closePopup('withdrawPopup')">×</button>
+    <div class="popup-icon">💰</div>
+    <h2>Withdraw Berhasil!</h2>
+    <div>Withdraw: <span id="withdrawAmount">******</span></div>
+    <p>Permintaan withdraw telah dikirim ke admin.</p>
+  </div>
+</div>
+
+<div id="bottomBar">
+  <button class="cashout-button" id="cashoutButton" onclick="cashOut()" style="display:none;">
+    <i class="fas fa-money-bill-wave"></i> Cash Out
+  </button>
+  <button class="menu-button" onclick="toggleMenu()">
+    <i class="fas fa-bars"></i> Menu
+  </button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
