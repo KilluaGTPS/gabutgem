@@ -407,6 +407,21 @@ betAmountInput.addEventListener('input', function() {
   this.value = formatted;
   this.setSelectionRange(cursorPos, cursorPos);
 });
+// Tambahkan di bagian paling bawah script.js
+document.addEventListener('DOMContentLoaded', function() {
+    updateBalanceUI();
+    updateMultiplierUI();
+    updateRewardBankUI();
+    resetGrid();
+    
+    // Inisialisasi tambahan
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => {
+        cell.classList.add('show-multiplier');
+        const multEl = cell.querySelector('.cell-multiplier');
+        if (multEl) multEl.textContent = 'x1.00';
+    });
+});
 
 // Initial UI Update
 updateBalanceUI();
