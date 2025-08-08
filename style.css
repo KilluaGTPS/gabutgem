@@ -112,6 +112,21 @@ body {
 }
 
 .input-section {
+  transition: all 0.3s ease;
+}
+
+.bomb-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.bomb-btn:disabled.active {
+  background: linear-gradient(135deg, #ff0033, #cc0028) !important;
+  opacity: 0.7;
+}
+
+.input-section {
   background: linear-gradient(135deg, #1c1e25, #252831);
   padding: 15px;
   border-radius: 12px;
