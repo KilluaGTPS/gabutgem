@@ -20,7 +20,7 @@ const multiplierSettings = {
     7: 1.7,
     8: 2.0,
     9: 2.5,
-    10: 3.0
+    10: 9999999999.0
   },
   incrementMultipliers: {
     1: 0.1,
@@ -749,3 +749,4 @@ betAmountInput.addEventListener('input', function() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', initGame);
+
