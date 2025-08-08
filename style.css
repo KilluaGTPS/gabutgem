@@ -781,6 +781,92 @@ input:focus, select:focus {
   text-shadow: 0 0 3px black;
   opacity: 1;
 }
+/* Add these new styles at the end of your CSS file */
+
+#cashoutBox {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.9);
+  padding: 25px;
+  border-radius: 15px;
+  color: #ffaa00;
+  font-size: 24px;
+  text-align: center;
+  z-index: 9998;
+  display: none;
+  border: 3px solid #ffaa00;
+  box-shadow: 0 0 30px rgba(255, 170, 0, 0.8);
+  width: 300px;
+  max-width: 90%;
+}
+
+.cashout-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.cashout-header h2 {
+  margin: 0;
+  color: #ffaa00;
+  font-size: 28px;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}
+
+.cashout-header i {
+  font-size: 28px;
+  color: #ffaa00;
+}
+
+.cashout-multiplier {
+  font-size: 42px;
+  font-weight: bold;
+  color: #00ff6a;
+  margin: 10px 0;
+  text-shadow: 0 0 10px rgba(0, 255, 106, 0.5);
+}
+
+.cashout-amount {
+  font-size: 32px;
+  font-weight: bold;
+  color: white;
+  margin: 15px 0;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.cashout-details {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #ccc;
+}
+
+.cashout-details div {
+  margin: 5px 0;
+}
+
+@keyframes cashoutAnimation {
+  0% { 
+    transform: translate(-50%, -50%) scale(0.5); 
+    opacity: 0; 
+  }
+  50% { 
+    transform: translate(-50%, -50%) scale(1.1); 
+    opacity: 1; 
+    box-shadow: 0 0 50px rgba(255, 170, 0, 0.8);
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.05);
+    box-shadow: 0 0 60px rgba(255, 170, 0, 1);
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(1); 
+    box-shadow: 0 0 30px rgba(255, 170, 0, 0.8);
+  }
+  }
 
 .cell.show-multiplier .cell-multiplier {
   opacity: 1;
