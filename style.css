@@ -781,6 +781,10 @@ input:focus, select:focus {
   text-shadow: 0 0 3px black;
   opacity: 1;
 }
+.cell.show-multiplier .cell-multiplier {
+  opacity: 1;
+}
+
 /* Add these new styles at the end of your CSS file */
 
 #cashoutBox {
@@ -866,12 +870,7 @@ input:focus, select:focus {
     transform: translate(-50%, -50%) scale(1); 
     box-shadow: 0 0 30px rgba(255, 170, 0, 0.8);
   }
-  }
-
-.cell.show-multiplier .cell-multiplier {
-  opacity: 1;
-      }
-
+    }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
