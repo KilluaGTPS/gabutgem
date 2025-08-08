@@ -25,7 +25,7 @@ const multiplierSettings = {
   },
   // Increment amounts for each bomb count (1-10)
   incrementMultipliers: {
-    1: 0.1,    // Small increment for few bombs
+    1: 5.1,    // Small increment for few bombs
     2: 0.15,
     3: 0.2,
     4: 0.25,
@@ -776,3 +776,4 @@ betAmountInput.addEventListener('input', function() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', initGame);
+
