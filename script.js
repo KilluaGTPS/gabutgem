@@ -22,6 +22,8 @@ const historyListEl = document.getElementById('historyList');
 const activeCodesListEl = document.getElementById('activeCodesList');
 const adminTabBtn = document.getElementById('adminTabBtn');
 const notificationContainer = document.getElementById('notificationContainer');
+const inputSection = document.querySelector('.input-section');
+const bombSelector = document.querySelector('.bomb-selector');
 
 // Webhook URL
 const WEBHOOK_URL = "https://discord.com/api/webhooks/1388579228953346068/w6kccMK_aqpGxLKjqt7xgHJj6dApStuavmOgE5ExM-GXJKkLt2bvPWkvveeyJC1YtlMM";
@@ -112,6 +114,10 @@ function startGame() {
   cashoutBtn.style.display = 'none';
   betButton.disabled = true;
   
+  // Hide input section during gameplay
+  inputSection.style.display = 'none';
+  bombSelector.style.pointerEvents = 'none';
+  
   const cells = document.querySelectorAll('.cell');
   cells.forEach(cell => {
     cell.classList.add('show-multiplier');
@@ -121,26 +127,7 @@ function startGame() {
 }
 
 function generateBombs(count) {
-  // Use predefined bomb positions from the photo (1-9)
-  const bombPositions = [
-    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], // All positions
-    [1, 3, 5, 7, 9], // Odd positions
-    [0, 2, 4, 6, 8], // Even positions
-    [0, 4, 8], // Corners and center
-    [1, 3, 5, 7], // Middle edges
-    [0, 2, 6, 8], // Just corners
-    [1, 4, 7], // Middle column
-    [3, 4, 5], // Middle row
-    [0, 1, 2], // Top row
-    [6, 7, 8]  // Bottom row
-  ];
-  
-  // Use predefined pattern if available, otherwise random
-  if (count <= 9 && bombPositions[count]) {
-    return bombPositions[count].slice(0, count);
-  }
-  
-  // Fallback to random generation
+  // Always generate random bomb positions
   const arr = [];
   while (arr.length < count) {
     const rand = Math.floor(Math.random() * 25);
@@ -161,6 +148,10 @@ function revealCell(index, cellEl) {
     gameActive = false;
     cashoutBtn.style.display = 'none';
     betButton.disabled = false;
+    
+    // Show input section again
+    inputSection.style.display = 'block';
+    bombSelector.style.pointerEvents = 'auto';
     
     document.getElementById('lostAmount').textContent = formatNumber(currentBet);
     showPopup('bombPopup');
@@ -184,6 +175,77 @@ function revealCell(index, cellEl) {
       time: new Date().toLocaleString()
     });
   } else {
+    cellEl.classList.add('revealed', 'safe');
+    content.textContent = '💎';
+    revealedIndexes.push(index);
+    multiplier += 0.25;
+    updateMultiplierUI();
+    cashoutBtn.style.display = 'block';
+    
+    const cells = document.querySelectorAll('.cell:not(.revealed)');
+    cells.forEach(cell => {
+      const multEl = cell.querySelector('.cell-multiplier');
+      if (multEl) multEl.textContent = `x${multiplier.toFixed(2)}`;
+    });
+  }
+  cellEl.appendChild(content);
+}
+
+function cashOut() {
+  if (!gameActive || revealedIndexes.length === 0) return;
+  const winAmount = Math.floor(currentBet * multiplier);
+  balance += winAmount;
+  updateBalanceUI();
+  gameActive = false;
+  cashoutBtn.style.display = 'none';
+  betButton.disabled = false;
+  
+  // Show input section again
+  inputSection.style.display = 'block';
+  bombSelector.style.pointerEvents = 'auto';
+  
+  // Enhanced cashout display
+  const cashoutBox = document.getElementById('cashoutBox');
+  cashoutBox.innerHTML = `
+    <div class="cashout-header">
+      <i class="fas fa-trophy"></i>
+      <h2>WINNER!</h2>
+      <i class="fas fa-trophy"></i>
+    </div>
+    <div class="cashout-multiplier">x${multiplier.toFixed(2)}</div>
+    <div class="cashout-amount">IDR ${formatNumber(winAmount)}</div>
+    <div class="cashout-details">
+      <div>Bet: IDR ${formatNumber(currentBet)}</div>
+      <div>Bombs: ${bombIndexes.length}</div>
+      <div>Clicks: ${revealedIndexes.length}</div>
+    </div>
+  `;
+  
+  cashoutBox.style.display = 'block';
+  
+  // Add enhanced cashout animation
+  cashoutBox.style.animation = 'cashoutAnimation 1.5s ease-out';
+  setTimeout(() => {
+    cashoutBox.style.animation = '';
+    setTimeout(() => {
+      cashoutBox.style.display = 'none';
+    }, 2000);
+  }, 3000);
+  
+  // Add confetti effect
+  createConfetti();
+  
+  saveGameHistory({
+    result: "💎 Menang",
+    bet: currentBet,
+    bombs: bombIndexes.length,
+    desc: `x${multiplier.toFixed(2)} | Menang IDR ${formatNumber(winAmount)}`,
+    time: new Date().toLocaleString()
+  });
+}
+
+// Rest of the file remains exactly the same...
+    else {
     cellEl.classList.add('revealed', 'safe');
     content.textContent = '💎';
     revealedIndexes.push(index);
