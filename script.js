@@ -1,4 +1,4 @@
- // Game Variables
+// Game Variables
 let balance = parseInt(localStorage.getItem('frost_balance')) || 100000;
 let rewardBank = parseInt(localStorage.getItem('frost_reward_bank')) || 0;
 let gameActive = false;
@@ -10,9 +10,8 @@ let isAdmin = localStorage.getItem('frost_admin') === 'true';
 
 // Multiplier Configuration
 const multiplierSettings = {
-  // Base multipliers for each bomb count (1-10)
   baseMultipliers: {
-    1: 1.0,    // Lower base for fewer bombs
+    1: 1.1,
     2: 1.1,
     3: 1.2,
     4: 1.3,
@@ -23,9 +22,8 @@ const multiplierSettings = {
     9: 2.5,
     10: 3.0
   },
-  // Increment amounts for each bomb count (1-10)
   incrementMultipliers: {
-    1: 5.1,    // Small increment for few bombs
+    1: 0.1,
     2: 0.15,
     3: 0.2,
     4: 0.25,
@@ -34,7 +32,7 @@ const multiplierSettings = {
     7: 0.5,
     8: 0.7,
     9: 0.9,
-    10: 1.2    // Large increment for many bombs
+    10: 1.2
   }
 };
 
@@ -71,7 +69,7 @@ function sanitizeInput(val) {
 
 function parseBet() {
   const rawValue = parseInt(sanitizeInput(betAmountInput.value)) || 0;
-  return Math.max(0, rawValue); // Ensure bet is never negative
+  return Math.max(0, rawValue);
 }
 
 function updateBalanceUI() {
@@ -149,7 +147,6 @@ function startGame() {
   cashoutBtn.style.display = 'none';
   betButton.disabled = true;
   
-  // Hide all input elements during gameplay
   inputSection.style.opacity = '0';
   inputSection.style.height = '0';
   inputSection.style.pointerEvents = 'none';
@@ -158,7 +155,6 @@ function startGame() {
   inputSection.style.overflow = 'hidden';
   inputSection.style.transition = 'all 0.3s ease';
   
-  // Disable bomb buttons
   document.querySelectorAll('.bomb-btn').forEach(btn => {
     btn.disabled = true;
   });
@@ -172,17 +168,14 @@ function startGame() {
 }
 
 function generateBombs(count) {
-  // Generate completely random bomb positions
   const arr = [];
-  const allPositions = Array.from({length: 25}, (_, i) => i); // [0,1,2,...,24]
+  const allPositions = Array.from({length: 25}, (_, i) => i);
   
-  // Shuffle the array using Fisher-Yates algorithm
   for (let i = allPositions.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [allPositions[i], allPositions[j]] = [allPositions[j], allPositions[i]];
   }
   
-  // Take first 'count' elements
   return allPositions.slice(0, count);
 }
 
@@ -199,7 +192,6 @@ function revealCell(index, cellEl) {
     cashoutBtn.style.display = 'none';
     betButton.disabled = false;
     
-    // Show input section again
     showInputSection();
     
     document.getElementById('lostAmount').textContent = formatNumber(currentBet);
@@ -228,7 +220,6 @@ function revealCell(index, cellEl) {
     content.textContent = '💎';
     revealedIndexes.push(index);
     
-    // Get increment based on bomb count
     const bombCount = bombIndexes.length;
     const increment = multiplierSettings.incrementMultipliers[bombCount] || 0.25;
     multiplier += increment;
@@ -246,14 +237,12 @@ function revealCell(index, cellEl) {
 }
 
 function showInputSection() {
-  // Show input section again
   inputSection.style.opacity = '1';
   inputSection.style.height = '';
   inputSection.style.pointerEvents = 'auto';
   inputSection.style.margin = '';
   inputSection.style.padding = '';
   
-  // Enable bomb buttons
   document.querySelectorAll('.bomb-btn').forEach(btn => {
     btn.disabled = false;
   });
@@ -268,10 +257,8 @@ function cashOut() {
   cashoutBtn.style.display = 'none';
   betButton.disabled = false;
   
-  // Show input section again
   showInputSection();
   
-  // Enhanced cashout display
   const cashoutBox = document.getElementById('cashoutBox');
   cashoutBox.innerHTML = `
     <div class="cashout-header">
@@ -289,8 +276,6 @@ function cashOut() {
   `;
   
   cashoutBox.style.display = 'block';
-  
-  // Add enhanced cashout animation
   cashoutBox.style.animation = 'cashoutAnimation 1.5s ease-out';
   setTimeout(() => {
     cashoutBox.style.animation = '';
@@ -299,7 +284,6 @@ function cashOut() {
     }, 2000);
   }, 3000);
   
-  // Add confetti effect
   createConfetti();
   
   saveGameHistory({
@@ -472,7 +456,6 @@ function processRedeem() {
     return;
   }
   
-  // Check active redeem codes
   const activeCode = redeemCodes.find(c => c.code.toLowerCase() === code.toLowerCase());
   if (activeCode) {
     balance += activeCode.amount;
@@ -483,7 +466,6 @@ function processRedeem() {
     return;
   }
   
-  // Check static codes if no active code found
   const validCodes = ["frostsaldo", "frost100k", "frostgg", "frostps"];
   if (!validCodes.includes(code)) {
     showNotification("❌ Kode tidak valid", "error");
@@ -540,7 +522,6 @@ function processWithdraw() {
   
   sendWithdrawToWebhook(username, world, amount);
   
-  // Reset form
   document.getElementById('withdrawUsername').value = '';
   document.getElementById('withdrawWorld').value = '';
   document.getElementById('withdrawAmountInput').value = '';
@@ -643,7 +624,6 @@ function processAdminCommand() {
     redeemCodes.push(newCode);
     localStorage.setItem('active_redeem_codes', JSON.stringify(redeemCodes));
     
-    // Send to webhook
     sendRedeemCodeToWebhook(code, amount, minutes);
     
     showNotification(`✅ Kode redeem "${code}" untuk IDR ${formatNumber(amount)} selama ${minutes} menit berhasil dibuat`, "success");
@@ -719,13 +699,9 @@ function initGame() {
   updateRewardBankUI();
   resetGrid();
   
-  // Set default bet amount
   betAmountInput.value = formatNumber(1000);
-  
-  // Set default bomb count
   setBombCount(1);
   
-  // Show initial grid with multipliers
   const cells = document.querySelectorAll('.cell');
   cells.forEach(cell => {
     cell.classList.add('show-multiplier');
@@ -733,12 +709,10 @@ function initGame() {
     if (multEl) multEl.textContent = 'x1.00';
   });
   
-  // Check admin status
   if (isAdmin) {
     adminTabBtn.style.display = 'block';
   }
   
-  // Check for expired codes
   checkExpiredCodes();
 }
 
@@ -758,7 +732,6 @@ setInterval(() => {
     localStorage.setItem('frost_reward_bank', rewardBank.toString());
   }
   
-  // Check expired codes every minute
   if (seconds % 60 === 0) {
     checkExpiredCodes();
   }
@@ -776,4 +749,3 @@ betAmountInput.addEventListener('input', function() {
 
 // Initialize on load
 document.addEventListener('DOMContentLoaded', initGame);
-
