@@ -1,4 +1,4 @@
-// Game Variables
+ // Game Variables
 let balance = parseInt(localStorage.getItem('frost_balance')) || 100000;
 let rewardBank = parseInt(localStorage.getItem('frost_reward_bank')) || 0;
 let gameActive = false;
@@ -7,6 +7,36 @@ let rewardStartTime = parseInt(localStorage.getItem('reward_start_time')) || Dat
 const usedCodes = JSON.parse(localStorage.getItem('used_redeem_codes') || "[]");
 let redeemCodes = JSON.parse(localStorage.getItem('active_redeem_codes') || "[]");
 let isAdmin = localStorage.getItem('frost_admin') === 'true';
+
+// Multiplier Configuration
+const multiplierSettings = {
+  // Base multipliers for each bomb count (1-10)
+  baseMultipliers: {
+    1: 1.0,    // Lower base for fewer bombs
+    2: 1.1,
+    3: 1.2,
+    4: 1.3,
+    5: 1.4,
+    6: 1.5,
+    7: 1.7,
+    8: 2.0,
+    9: 2.5,
+    10: 3.0
+  },
+  // Increment amounts for each bomb count (1-10)
+  incrementMultipliers: {
+    1: 0.1,    // Small increment for few bombs
+    2: 0.15,
+    3: 0.2,
+    4: 0.25,
+    5: 0.3,
+    6: 0.4,
+    7: 0.5,
+    8: 0.7,
+    9: 0.9,
+    10: 1.2    // Large increment for many bombs
+  }
+};
 
 // DOM Elements
 const balanceEl = document.getElementById('balance');
@@ -40,7 +70,8 @@ function sanitizeInput(val) {
 }
 
 function parseBet() {
-  return parseInt(sanitizeInput(betAmountInput.value)) || 0;
+  const rawValue = parseInt(sanitizeInput(betAmountInput.value)) || 0;
+  return Math.max(0, rawValue); // Ensure bet is never negative
 }
 
 function updateBalanceUI() {
@@ -49,7 +80,9 @@ function updateBalanceUI() {
 }
 
 function updateMultiplierUI() {
-  multiplierEl.textContent = `x${multiplier.toFixed(2)}`;
+  const bombCount = bombIndexes.length;
+  const increment = multiplierSettings.incrementMultipliers[bombCount] || 0.25;
+  multiplierEl.innerHTML = `x${multiplier.toFixed(2)}<br><small>+${increment.toFixed(2)} per gem</small>`;
 }
 
 function updateRewardBankUI() {
@@ -194,7 +227,12 @@ function revealCell(index, cellEl) {
     cellEl.classList.add('revealed', 'safe');
     content.textContent = '💎';
     revealedIndexes.push(index);
-    multiplier += 0.25;
+    
+    // Get increment based on bomb count
+    const bombCount = bombIndexes.length;
+    const increment = multiplierSettings.incrementMultipliers[bombCount] || 0.25;
+    multiplier += increment;
+    
     updateMultiplierUI();
     cashoutBtn.style.display = 'block';
     
@@ -318,6 +356,11 @@ function doubleBet() {
 }
 
 function setBombCount(count) {
+  const currentBet = parseBet();
+  if (currentBet > balance) {
+    showNotification("⚠️ Kurangi taruhan atau tambah saldo untuk bom sebanyak ini", "error");
+    return;
+  }
   document.getElementById('mineCount').value = count;
   document.querySelectorAll('.bomb-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -326,11 +369,7 @@ function setBombCount(count) {
 }
 
 function getBaseMultiplier(bombs) {
-  const table = { 
-    1: 1.5, 2: 1.4, 3: 1.3, 4: 1.25, 5: 1.2, 
-    6: 1.15, 7: 1.1, 8: 1.05, 9: 1.03, 10: 1.01 
-  };
-  return table[bombs] || 1;
+  return multiplierSettings.baseMultipliers[bombs] || 1.0;
 }
 
 // Menu Functions
